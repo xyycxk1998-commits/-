@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安居客租房数据可视化看板</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .label {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .chart-card h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            display: inline-block;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 350px;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+            border-top: 2px solid #e9ecef;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 安居客租房数据可视化看板</h1>
+            <p>百宏御璟天下小区房源数据分析</p>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="value">67</div>
+                <div class="label">总房源数（套）</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">1961</div>
+                <div class="label">平均租金（元/月）</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">78.9</div>
+                <div class="label">平均面积（㎡）</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">900-4500</div>
+                <div class="label">租金区间（元/月）</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">20-160</div>
+                <div class="label">面积区间（㎡）</div>
+            </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>📊 不同户型平均租金对比</h3>
+                <div id="chart1" class="chart-container"></div>
+            </div>
+
+            <div class="chart-card">
+                <h3>📏 不同面积段平均租金</h3>
+                <div id="chart2" class="chart-container"></div>
+            </div>
+
+            <div class="chart-card">
+                <h3>🎨 房源装修情况分布</h3>
+                <div id="chart3" class="chart-container"></div>
+            </div>
+
+            <div class="chart-card">
+                <h3>🏢 不同楼层平均租金</h3>
+                <div id="chart4" class="chart-container"></div>
+            </div>
+
+            <div class="chart-card" style="grid-column: 1 / -1;">
+                <h3>💰 租金价格分布</h3>
+                <div id="chart5" class="chart-container" style="height: 400px;"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 图表 1：户型租金对比
+        var chart1 = echarts.init(document.getElementById('chart1'));
+        var option1 = {
+            color: ['#FF6B6B'],
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: { type: 'shadow' }
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                top: '10%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: ['1 室', '2 室', '3 室', '4 室', '5 室'],
+                axisLabel: {
+                    fontSize: 12,
+                    fontWeight: 'bold'
+                }
+            },
+            yAxis: {
+                type: 'value',
+                name: '租金 (元/月)',
+                axisLabel: {
+                    formatter: '{value}'
+                }
+            },
+            series: [{
+                data: [1150.47, 1910.31, 2414.29, 2972.73, 4500.0],
+                type: 'bar',
+                barWidth: '50%',
+                itemStyle: {
+                    borderRadius: [10, 10, 0, 0]
+                },
+                label: {
+                    show: true,
+                    position: 'top',
+                    fontSize: 12,
+                    formatter: '{c}元'
+                }
+            }]
+        };
+        chart1.setOption(option1);
+
+        // 图表 2：面积租金关系
+        var chart2 = echarts.init(document.getElementById('chart2'));
+        var option2 = {
+            color: ['#4ECDC4'],
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: { type: 'shadow' }
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                top: '10%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: ['<50㎡', '50-80㎡', '80-100㎡', '100-120㎡', '120-150㎡', '>150㎡'],
+                axisLabel: {
+                    fontSize: 11,
+                    fontWeight: 'bold',
+                    rotate: 0
+                }
+            },
+            yAxis: {
+                type: 'value',
+                name: '租金 (元/月)'
+            },
+            series: [{
+                data: [1050, 1650, 2100, 2800, 3400, 4200],
+                type: 'bar',
+                barWidth: '50%',
+                itemStyle: {
+                    borderRadius: [10, 10, 0, 0]
+                },
+                label: {
+                    show: true,
+                    position: 'top',
+                    formatter: '{c}元'
+                }
+            }]
+        };
+        chart2.setOption(option2);
+
+        // 图表 3：装修分布
+        var chart3 = echarts.init(document.getElementById('chart3'));
+        var option3 = {
+            color: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'],
+            tooltip: {
+                trigger: 'item',
+                formatter: '{b}: {c}套 ({d}%)'
+            },
+            legend: {
+                orient: 'vertical',
+                right: '5%',
+                top: 'center'
+            },
+            series: [{
+                type: 'pie',
+                radius: ['40%', '70%'],
+                center: ['35%', '50%'],
+                data: [
+                    { value: 45, name: '精装修' },
+                    { value: 15, name: '普通装修' },
+                    { value: 5, name: '豪华装修' },
+                    { value: 2, name: '简单装修' }
+                ],
+                label: {
+                    formatter: '{b}: {c}套'
+                },
+                emphasis: {
+                    itemStyle: {
+                        shadowBlur: 10,
+                        shadowOffsetX: 0,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                }
+            }]
+        };
+        chart3.setOption(option3);
+
+        // 图表 4：楼层租金
+        var chart4 = echarts.init(document.getElementById('chart4'));
+        var option4 = {
+            color: ['#FFA07A'],
+            tooltip: {
+                trigger: 'axis'
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                top: '10%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: ['低层', '中层', '高层'],
+                boundaryGap: false
+            },
+            yAxis: {
+                type: 'value',
+                name: '租金 (元/月)'
+            },
+            series: [{
+                data: [1850, 1980, 2150],
+                type: 'line',
+                smooth: true,
+                symbol: 'circle',
+                symbolSize: 10,
+                itemStyle: {
+                    color: '#FFA07A'
+                },
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: 'rgba(255, 160, 122, 0.5)' },
+                        { offset: 1, color: 'rgba(255, 160, 122, 0.1)' }
+                    ])
+                },
+                label: {
+                    show: true,
+                    position: 'top',
+                    formatter: '{c}元'
+                }
+            }]
+        };
+        chart4.setOption(option4);
+
+        // 图表 5：价格分布
+        var chart5 = echarts.init(document.getElementById('chart5'));
+        var option5 = {
+            color: ['#95E1D3'],
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: { type: 'shadow' }
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                top: '10%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: ['<1000', '1000-1500', '1500-2000', '2000-2500', '2500-3000', '3000-4000', '>4000'],
+                axisLabel: {
+                    fontSize: 11,
+                    fontWeight: 'bold'
+                },
+                name: '租金区间 (元/月)',
+                nameLocation: 'middle',
+                nameGap: 30
+            },
+            yAxis: {
+                type: 'value',
+                name: '房源数量 (套)'
+            },
+            series: [{
+                data: [8, 18, 20, 12, 5, 3, 1],
+                type: 'bar',
+                barWidth: '60%',
+                itemStyle: {
+                    borderRadius: [10, 10, 0, 0]
+                },
+                label: {
+                    show: true,
+                    position: 'top',
+                    formatter: '{c}套'
+                }
+            }]
+        };
+        chart5.setOption(option5);
+
+        // 响应式调整
+        window.addEventListener('resize', function() {
+            chart1.resize();
+            chart2.resize();
+            chart3.resize();
+            chart4.resize();
+            chart5.resize();
+        });
+    </script>
+</body>
+</html>
